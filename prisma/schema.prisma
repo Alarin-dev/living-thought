@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  thoughts         Thought[]
+  document         Document?
+  documentVersions DocumentVersion[]
+  changeEvents     ChangeEvent[]
+}
+
+model Thought {
+  id             String   @id @default(cuid())
+  sessionId      String
+  rawText        String
+  createdAt      DateTime @default(now())
+  sequenceNumber Int
+
+  session      Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  changeEvents ChangeEvent[]
+
+  @@unique([sessionId, sequenceNumber])
+}
+
+model Document {
+  id             String   @id @default(cuid())
+  sessionId      String   @unique
+  currentContent String
+  versionNumber  Int
+  updatedAt      DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  sessionId     String
+  versionNumber Int
+  content       String
+  createdAt     DateTime @default(now())
+  reason        String?
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, versionNumber])
+}
+
+model ChangeEvent {
+  id            String   @id @default(cuid())
+  sessionId     String
+  thoughtId     String?
+  changeType    String
+  summary       String
+  beforeContent String
+  afterContent  String
+  createdAt     DateTime @default(now())
+
+  session Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  thought Thought? @relation(fields: [thoughtId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([thoughtId])
+}

@@ -12,6 +12,11 @@ export interface LivingDocument {
   recentDevelopments: string[];
 }
 
+export interface SessionSummary {
+  id: string;
+  title: string;
+}
+
 export interface Session {
   id: string;
   title: string;
